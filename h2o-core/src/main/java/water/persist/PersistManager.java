@@ -5,15 +5,12 @@ import water.Key;
 import water.MRTask;
 import water.Value;
 import water.exceptions.H2OIllegalArgumentException;
-import water.fvec.UploadFileVec;
 import water.util.FileUtils;
-import water.util.FrameUtils;
 import water.util.Log;
 import water.persist.Persist.PersistEntry;
 
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -132,6 +129,7 @@ public class PersistManager {
 
     I[Value.ICE ] = ice;
     I[Value.NFS ] = new PersistNFS();
+    I[Value.HTTP] = new PersistHTTP();
 
     try {
       Class klass = Class.forName("water.persist.PersistHdfs");
@@ -290,13 +288,7 @@ public class PersistManager {
     if (scheme == null || "file".equals(scheme)) {
       I[Value.NFS].importFiles(path, pattern, files, keys, fails, dels);
     } else if ("http".equals(scheme) || "https".equals(scheme)) {
-      try {
-        Key destination_key = FrameUtils.eagerLoadFromHTTP(path);
-        files.add(path);
-        keys.add(destination_key.toString());
-      } catch( Throwable e) {
-        fails.add(path); // Fails for e.g. broken sockets silently swallow exceptions and just record the failed path
-      }
+      I[Value.HTTP].importFiles(path, pattern, files, keys, fails, dels);
     } else if ("s3".equals(scheme)) {
       if (I[Value.S3] == null) throw new H2OIllegalArgumentException("S3 support is not configured");
       I[Value.S3].importFiles(path, pattern, files, keys, fails, dels);
